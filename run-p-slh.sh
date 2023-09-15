@@ -27,7 +27,7 @@ for i in 0 1 2 3 4 5 10 20 30 40 50 100
   git checkout insertfence --force
 
   # modify the value in hardening pass
-  sed -i "s/if (randomNum <= .*)/if (randomNum <= $i)/" /home/zhongfa/SpecFuzz/install/patches/llvm/X86SpeculativeLoadHardening.cpp
+  sed -i "s/if (randomNum < .*)/if (randomNum < $i)/" /home/zhongfa/SpecFuzz/install/patches/llvm/X86SpeculativeLoadHardening.cpp
   
   # Compile the pass
   cd /home/zhongfa/SpecFuzz
