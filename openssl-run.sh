@@ -14,7 +14,4 @@ cat /home/zhongfa/benchmarks/run/results/results-openssl-ecdsa-*.txt >> /home/zh
 echo "The results when $1% fences done" >> /home/zhongfa/benchmarks/run/results/results-openssl-rsa.txt
 echo "The results when $1% fences done" >> /home/zhongfa/benchmarks/run/results/results-openssl-dsa.txt
 echo "The results when $1% fences done" >> /home/zhongfa/benchmarks/run/results/results-openssl-ecdsa.txt
-sudo rm results-openssl-rsa-*.txt 
-sudo rm results-openssl-dsa-*.txt 
-sudo rm results-openssl-ecdsa-*.txt
 
