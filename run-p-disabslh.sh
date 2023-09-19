@@ -22,22 +22,9 @@
 # start run of my binaries: different x%
 for i in 0 1 2 3 4 5 10 20 30 40 50 100
   do
-  # switch the branch of SpecFuzz repo to insertfence
-  cd /home/zhongfa/SpecFuzz
-  git checkout disabslh --force
-
-  # modify the value in hardening pass
-  sed -i "s/if (randomNum < .*)/if (randomNum < $i)/" /home/zhongfa/SpecFuzz/install/patches/llvm/X86SpeculativeLoadHardening.cpp
-  
-  # Compile the pass
-  cd /home/zhongfa/SpecFuzz
-  sudo make all HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src
-  sudo make install HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src
-  sudo make install_tools HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src  
-
   # build the benchmarks
   cd /home/zhongfa/benchmarks/run/bench
-  ls | sudo parallel -j64 -k 'cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make patched PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src'
+  ls | sudo parallel -j64 -k "cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make patched PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src FENCE_PERCENTAGE=$i"
   
   # evaluating
   cd /home/zhongfa/benchmarks/run/scripts
@@ -58,23 +45,18 @@ for i in 0 1 2 3 4 5 10 20 30 40 50 100
 done
 
 # start running of binaries from SpecFuzz: native, slh, patched
-# compile the pass
-cd /home/zhongfa/SpecFuzz
-git checkout master --force
-sudo make all HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src
-sudo make install HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src
-sudo make install_tools HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src  
 
 # build the benchmarks
 cd /home/zhongfa/benchmarks/run/bench
-ls | sudo parallel -j64 -k 'cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make native PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src'
-ls | sudo parallel -j64 -k 'cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make slh PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src'
-ls | sudo parallel -j64 -k 'cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make patched PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src'
+ls | sudo parallel -j64 -k "cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make native PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src FENCE_PERCENTAGE=$i"
+ls | sudo parallel -j64 -k "cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make slh PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src FENCE_PERCENTAGE=$i"
+ls | sudo parallel -j64 -k "cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make patched PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src FENCE_PERCENTAGE=$i"
 
 # evaluating
 cd /home/zhongfa/benchmarks/run/scripts
   
-for i in native slh patched
+# for i in native slh patched
+for i in slh patched
 do
 cd /home/zhongfa/benchmarks/run/scripts
 parallel -j64 sudo bash ::: brotli-run.sh  http-run.sh  jsmn-run.sh  libhtp-run.sh  libyaml-run.sh  openssl-run.sh ::: $i ::: $i
@@ -82,6 +64,10 @@ parallel -j64 sudo bash ::: brotli-run.sh  http-run.sh  jsmn-run.sh  libhtp-run.
 # remove the binaries
 cd /home/zhongfa/benchmarks/run/bench/
 seq 1 10 | sudo parallel -j10 -k "cd ./brotli-{} && rm enwik9"
+  # remove the intermediary files
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-rsa-*.log 
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-dsa-*.log 
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-ecdsa-*.log
 done
 
 # # Data wrangling
