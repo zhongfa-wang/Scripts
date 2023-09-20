@@ -39,22 +39,28 @@ for i in 0 1 2 3 4 5 10 20 30 40 50 100
   cd /home/zhongfa/benchmarks/run/bench
   ls | sudo parallel -j64 -k 'cd {.} && make clean HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src && make patched PERF=1 HONGG_SRC=/usr/local/honggfuzz-589a9fb92/src'
   
+  for round in 1 2 3 4 5 6 7 8 9 10
+  do
   # evaluating
   cd /home/zhongfa/benchmarks/run/scripts
-  parallel -j64 sudo bash ::: brotli-run.sh  http-run.sh  jsmn-run.sh  libhtp-run.sh  libyaml-run.sh  openssl-run.sh ::: $i ::: "patched"
-  
+  parallel -j64 sudo bash ::: brotli-run.sh  http-run.sh  jsmn-run.sh  libhtp-run.sh  libyaml-run.sh  openssl-run.sh ::: $i ::: patched
+
+  # remove the enwik9
+  cd /home/zhongfa/benchmarks/run/bench/
+  seq 1 10 | sudo parallel -j10 -k 'cd ./brotli-{} && rm enwik9'
+  # remove the intermediary files
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-rsa-*.log 
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-dsa-*.log 
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-ecdsa-*.log
+  done
   # remove the patched binary
   cd /home/zhongfa/benchmarks/run/bench/
-  seq 1 10 | sudo parallel -j10 -k 'cd ./brotli-{} && rm patched enwik9'
+  seq 1 10 | sudo parallel -j10 -k 'cd ./brotli-{} && rm patched'
   seq 1 10 | sudo parallel -j10 -k 'cd ./http-parser-{} && rm patched'
   seq 1 10 | sudo parallel -j10 -k 'cd ./jsmn-{} && rm patched'
   seq 1 10 | sudo parallel -j10 -k 'cd ./libyaml-benchmark-{} && rm patched'
   seq 1 10 | sudo parallel -j10 -k 'cd ./libhtp-benchmark-{} && rm patched'
   seq 1 10 | sudo parallel -j10 -k 'cd ./openssl-benchmark-{} && rm patched'
-  # remove the intermediary files
-  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-rsa-*.log 
-  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-dsa-*.log 
-  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-ecdsa-*.log
 done
 
 # start running of binaries from SpecFuzz: native, slh, patched
@@ -76,12 +82,19 @@ cd /home/zhongfa/benchmarks/run/scripts
   
 for i in native slh patched
 do
+  for round in 1 2 3 4 5 6 7 8 9 10
+  do
 cd /home/zhongfa/benchmarks/run/scripts
 parallel -j64 sudo bash ::: brotli-run.sh  http-run.sh  jsmn-run.sh  libhtp-run.sh  libyaml-run.sh  openssl-run.sh ::: $i ::: $i
 
 # remove the binaries
 cd /home/zhongfa/benchmarks/run/bench/
 seq 1 10 | sudo parallel -j10 -k "cd ./brotli-{} && rm enwik9"
+# remove the intermediary files
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-rsa-*.log 
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-dsa-*.log 
+  sudo rm /home/zhongfa/benchmarks/run/results/results-openssl-ecdsa-*.log
+  done
 done
 
 # # Data wrangling
