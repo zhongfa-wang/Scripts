@@ -1,11 +1,40 @@
 #!/bin/bash
 
-print_all() {
-  local -r this_dir=$(dirname $(readlink -f $0))
+if [[ ${2} != "" ]] 
+then
+  declare -rg copies="${2}"
+else
+  declare -rg copies=10
+fi
 
-  if [[ ${mode} == build ]]; then
-    local -r script="bash ${this_dir}/build.sh"
-    local -r benchs=(
+
+declare -rg this_path=$(dirname $(readlink -f $0))
+declare -rg mold=$1
+
+print() {
+  local -r percents=(
+    0
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+    10
+    20
+    30
+  )
+  local -r patches=(
+    native
+    slh
+    patched
+  )
+  if [[ $mold == build ]]; then
+    local -r script="bash ${this_path}/build.sh"
+    local -r benches=(
       "brotli"
       "http-parser"
       "jsmn"
@@ -13,62 +42,46 @@ print_all() {
       "libyaml-benchmark"
       "openssl-benchmark"
     )
-  elif [[ ${mode} == run ]]; then
-    local -r script="bash ${this_dir}/run.sh"
-    local -r benchs=(
+  elif [[ $mold == run ]]; then
+    local -r script="bash ${this_path}/run.sh"
+    local -r benches=(
       "brotli"
       "http"
       "jsmn"
       "libhtp"
       "libyaml"
-      "openssl_rsa"
-      "openssl_dsa"
-      "openssl_ecdsa"
+      "openssl-rsa"
+      "openssl-dsa"
+      "openssl-ecdsa"
     )
   else
-    echo "ERROR: the first argument should be either 'build' or 'run'" 1>&2
+    echo "Error! The first flag should be either 'build' or 'run'!" 1>&2
     exit 1
   fi
 
-  local -r percents=(
-    1
-    2
-    3
-    4
-    5
-    10
-    20
-    30
-    40
-    50
-  )
-
-  for bench in ${benchs[@]}
+  for bench in ${benches[@]}
   do
     for percent in ${percents[@]}
     do
-      for copy in $(seq 1 ${num_copies})
+      for copy in $(seq 1 ${copies})
       do
-        echo "${script} ${bench} ${percent} ${copy}"
+        echo "${script} ${bench} percent ${percent} ${copy}"
       done
     done
-    # single copy with copy id 0 for the two since they're deterministic
-    for percent in 0 100
+    # copies of origin SpecFuzz patches
+    # -1 means that the proportionally inserting fence is disabled
+    for patch in ${patches[@]}
     do
-      echo "${script} ${bench} ${percent} 0"
+      for copy in $(seq 1 ${copies})
+      do
+        echo "${script} ${bench} ${patch} -1 ${copy}"
+      done
     done
   done
 }
 
 main() {
-  print_all
+  print
 }
-
-declare -rg mode="${1}"
-if [[ ${2} != "" ]]; then
-  declare -rg num_copies="${2}"
-else
-  declare -rg num_copies=10
-fi
 
 main

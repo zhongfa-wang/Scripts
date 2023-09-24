@@ -1,80 +1,80 @@
-#!/bin/bash
+#!/bin/bash -xv
+declare -rg bench=${1}
+declare -rg patch=${2}
+declare -rg percent=${3}
+declare -rg copy=${4}
 
-get_cmd() {
+get_cmd(){
   local -rA assignments=(
-    [libhtp]="srcdir=./libhtp/test/files"
+    [libhtp]="srcdir=test/files"
   )
+  [[ -v "${assignments[${bench}]}" ]] && local -r assignment="${assignments[${bench}]}" || local -r assignment=""
+
+  if [[ ${patch} == "percent" ]]; then
+    local -r binary="proportion"
+  elif [[ ${patch} == "native" ]]; then
+    local -r binary="native"
+  elif [[ ${patch} == "slh" ]]; then
+    local -r binary="slh"
+  elif [[ ${patch} == "patched" ]]; then
+    local -r binary="patched"
+  else
+    echo "Wrong patch!" 1>&2
+    exit 1
+  fi
 
   local -rA args=(
     [brotli]="--decompress enwik9.br -f"
     [http]="large.txt"
-    [jsmn]="per.json"
+    [jsmn]="perf.json"
     [libhtp]="--gtest_filter=Benchmark.ConnectionWithManyTransactions"
     [libyaml]="small.yaml"
-    [openssl_rsa]="speed rsa"
-    [openssl_dsa]="speed dsa"
-    [openssl_ecdsa]="speed ecdsa"
+    [openssl-rsa]="speed rsa"
+    [openssl-dsa]="speed dsa"
+    [openssl-ecdsa]="speed ecdsa"
   )
-
-  [[ -v "assignments[${bench}]" ]] && local -r assignment=${assignments[${bench}]} || local -r assignment=""
-  cmd="${assignment} ${binary} ${args[${bench}]}"
-
+  local -r cmd="${assignment} ./${binary} ${args[${bench}]}"
   echo "${cmd}"
 }
 
-get_src_dir() {
-  local -rA dirs=(
+get_src_dir(){
+  local -rA src=(
     [brotli]="brotli"
-    [http]="http-parser"
+    [http]="http"
     [jsmn]="jsmn"
     [libhtp]="libhtp-benchmark"
     [libyaml]="libyaml-benchmark"
-    [openssl_rsa]="openssl-benchmark"
-    [openssl_dsa]="openssl-benchmark"
-    [openssl_ecdsa]="openssl-benchmark"
+    [openssl-rsa]="openssl-benchmark"
+    [openssl-dsa]="openssl-benchmark"
+    [openssl-ecdsa]="openssl-benchmark"
   )
-
-  echo ${dirs[${bench}]}
+  echo "${src[${bench}]}"
 }
 
-run() {
-  local -r id="${percent}-${copy}"
-  local -r src_dir="${HOME}/benchmarks/src/${bench}"
-  local -r bin_dir="${HOME}/benchmarks/bin/$(get_src_dir)"
-  local -r result_dir="${HOME}/benchmarks/result/${bench}"
-  local -r result="time.out.${bench}.${id}"
+run(){
+  local -r bin_dir="${HOME}/benchmarks/bin/$(get_src_dir)-${patch}-${percent}-${copy}"
+  local -r result_dir="${HOME}/benchmarks/results/"
+  local -r result="time.out.${bench}-${patch}-${percent}-${copy}"
   local -r cmd="$(get_cmd)"
-  local -r tmp_dir="/tmp/$(id -un)/run"
-  local -r work_dir="${tmp_dir}/${bench}.${id}"
 
-  [[ -d ${work_dir} ]] && rm -r "${work_dir}"
-  mkdir -p "${work_dir}"
-  cp "${bin_dir}/${binary}.${id}" "${work_dir}/${binary}"
-  cp "${src_dir}/*" "${work_dir}/"
-
-  cd "${work_dir}"
+  cd ${bin_dir}
   if command -v /usr/bin/time > /dev/null; then
     /usr/bin/time -f %U -o ${result} ${cmd}
   else
     export TIMEFORMAT=%U
-    # cf. http://mywiki.wooledge.org/BashFAQ/032
-    { time ${cmd} > /dev/null 2>&1; } 2> ${result}
+    { time ${cmd} > /dev/null 2>&1; } 2> "${bin_dir}/${result}"
   fi
 
-  mkdir -p "${result_dir}"
-  cp ${result} "${result_dir}/"
-
-  cd ..
-  rm -r "${work_dir}"
+  mkdir -p ${result_dir}
+  cp "${bin_dir}/${result}" "${result_dir}"
+  
+  cd "${bin_dir}/.."
+  rm -r "${bin_dir}/"
 }
 
-main() {
+
+main(){
   run
 }
-
-declare -rg bench=${1}
-declare -rg percent=${2}
-declare -rg copy=${3}
-declare -rg binary="patched"
 
 main
