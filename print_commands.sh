@@ -42,8 +42,8 @@ print() {
       "libyaml-benchmark"
       "openssl-benchmark"
     )
-  elif [[ $mold == run ]]; then
-    local -r script="bash ${this_path}/run.sh"
+  elif [[ $mold == evaluate ]]; then
+    local -r script="bash ${this_path}/evaluate.sh"
     local -r benches=(
       "brotli"
       "http"
@@ -55,7 +55,7 @@ print() {
       "openssl-ecdsa"
     )
   else
-    echo "Error! The first flag should be either 'build' or 'run'!" 1>&2
+    echo "Error! The first flag should be either 'build' or 'evaluate'!" 1>&2
     exit 1
   fi
 

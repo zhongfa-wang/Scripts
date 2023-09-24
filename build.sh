@@ -48,9 +48,9 @@ build(){
 
 
   cd "${work_dir}"
-  sed -i -e "s@/${src_dir}/@${work_dir}/@g" "${work_dir}/whitelist.txt"
-  make clean
   set -x
+  sed -i -e "s@${src_dir}/@${work_dir}/@g" "${work_dir}/whitelist.txt"
+  make clean
   make ${binary} PROP=${percent} PERF=1 HONGG_SRC=${hongg_dir}
 
   mkdir -p "${bin_dir}"
@@ -60,7 +60,7 @@ build(){
   fi
 
   cd "${work_dir}/.."
-  rm -r "${work_dir}"
+  rm -rf "${work_dir}"
 }
 
 main(){

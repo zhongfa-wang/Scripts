@@ -58,18 +58,21 @@ run(){
   local -r cmd="$(get_cmd)"
 
   cd ${bin_dir}
-  if command -v /usr/bin/time > /dev/null; then
-    /usr/bin/time -f %U -o ${result} ${cmd}
+  if [[ $(get_src_dir) != "openssl-benchmark" ]];then
+    if command -v /usr/bin/time > /dev/null; then
+      /usr/bin/time -f %U -o ${result} ${cmd}
+    else
+      export TIMEFORMAT=%U
+      { time ${cmd} > /dev/null 2>&1; } 2> "${bin_dir}/${result}"
+    fi
   else
-    export TIMEFORMAT=%U
-    { time ${cmd} > /dev/null 2>&1; } 2> "${bin_dir}/${result}"
+    ${cmd} > "${bin_dir}/${result}"
   fi
 
   mkdir -p ${result_dir}
   cp "${bin_dir}/${result}" "${result_dir}"
   
   cd "${bin_dir}/.."
-  rm -r "${bin_dir}/"
 }
 
 
