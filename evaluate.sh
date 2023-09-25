@@ -1,4 +1,4 @@
-#!/bin/bash -xv
+#!/bin/bash
 declare -rg bench=${1}
 declare -rg patch=${2}
 declare -rg percent=${3}
@@ -40,7 +40,7 @@ get_cmd(){
 get_src_dir(){
   local -rA src=(
     [brotli]="brotli"
-    [http]="http"
+    [http]="http-parser"
     [jsmn]="jsmn"
     [libhtp]="libhtp-benchmark"
     [libyaml]="libyaml-benchmark"
@@ -53,10 +53,13 @@ get_src_dir(){
 
 run(){
   local -r bin_dir="${HOME}/benchmarks/bin/$(get_src_dir)-${patch}-${percent}-${copy}"
-  local -r result_dir="${HOME}/benchmarks/results/"
+  local -r result_dir="${HOME}/benchmarks/results/raw"
   local -r result="time.out.${bench}-${patch}-${percent}-${copy}"
   local -r cmd="$(get_cmd)"
 
+  if ! [[ -d ${bin_dir} ]]; then
+    mkdir -p "${bin_dir}"
+  fi
   cd ${bin_dir}
   if [[ $(get_src_dir) != "openssl-benchmark" ]];then
     if command -v /usr/bin/time > /dev/null; then
