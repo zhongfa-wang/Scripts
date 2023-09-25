@@ -17,7 +17,7 @@ run(){
   # rm command_build command_evaluate
 
   cd "${bin_dir}"
-  ls | sudo parallel -j64 -k 'rm -rf {.}'
+  ls | parallel -j64 -k 'rm -rf {.}'
   
   cd "${script_dir}"
   ./data_wrangling.sh
